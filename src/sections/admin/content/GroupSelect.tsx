@@ -141,7 +141,7 @@ export default function GroupSelect({
             });
           }
 
-          return result;
+          return result as any;
         }}
         renderOption={(props, option: any, { selected }) => {
           const { key, ...optionProps } = props;
@@ -149,9 +149,10 @@ export default function GroupSelect({
           if (option.isCreate) {
             return (
               <Box
+                component="li"
                 key={`create-${option.title}`}
                 {...optionProps}
-                onClick={(e) => {
+                onClick={(e: React.MouseEvent) => {
                   e.stopPropagation();
                   handleQuickCreate(option.title);
                 }}
@@ -193,7 +194,7 @@ export default function GroupSelect({
             return (
               <Chip
                 key={key}
-                variant="combined"
+                variant="outlined"
                 size="small"
                 icon={<People size={14} />}
                 label={option.title}

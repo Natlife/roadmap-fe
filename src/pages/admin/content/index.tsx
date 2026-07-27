@@ -45,7 +45,7 @@ export default function ContentTopics() {
                   size="small"
                   label={t.accessLevel || 'FREE'}
                   color={t.accessLevel === 'PREMIUM' ? 'warning' : 'success'}
-                  variant="combined"
+                  variant="outlined"
                   sx={{ fontWeight: 700 }}
                 />
                 <Chip size="small" variant="outlined" label={`${t.lessons?.length || 0} blogs`} />

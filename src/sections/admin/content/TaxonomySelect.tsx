@@ -152,7 +152,7 @@ export default function TaxonomySelect({
             });
           }
 
-          return result;
+          return result as any;
         }}
         renderOption={(props, option: any, { selected }) => {
           const { key, ...optionProps } = props;
@@ -160,9 +160,10 @@ export default function TaxonomySelect({
           if (option.isCreate) {
             return (
               <Box
+                component="li"
                 key={`create-${option.title}`}
                 {...optionProps}
-                onClick={(e) => {
+                onClick={(e: React.MouseEvent) => {
                   e.stopPropagation();
                   handleQuickCreate(option.title);
                 }}
@@ -203,7 +204,7 @@ export default function TaxonomySelect({
             return (
               <Chip
                 key={key}
-                variant="combined"
+                variant="outlined"
                 size="small"
                 label={option.title}
                 {...tagProps}

@@ -50,7 +50,7 @@ export default function TopicDetail() {
                   size="small"
                   label={b.accessLevel || 'FREE'}
                   color={b.accessLevel === 'PREMIUM' ? 'warning' : 'success'}
-                  variant="combined"
+                  variant="outlined"
                   sx={{ fontWeight: 700 }}
                 />
                 <Chip size="small" variant="outlined" label={`${b.steps?.length || 0} steps`} />

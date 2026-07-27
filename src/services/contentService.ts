@@ -9,6 +9,7 @@ import type {
   CreateTopicPayload,
   Step,
   StepBlock,
+  StepQuizQuestion,
   Topic
 } from '@/types';
 
