@@ -24,7 +24,8 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-# Environment files & Secrets (Commit .env / .env.example only, ignore local secret overrides)
+# Environment files & Secrets (Commit .env.example only, ignore .env and local secret overrides)
+.env
 .env.local
 .env.development.local
 .env.test.local
