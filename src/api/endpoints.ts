@@ -39,6 +39,12 @@ export const endpoints = {
     adminSteps: `${API_VERSION}/admin/steps`,
     adminStep: (id: string) => `${API_VERSION}/admin/steps/${id}`,
     adminStepBlocks: (id: string) => `${API_VERSION}/admin/steps/${id}/blocks`,
-    adminStepQuizzes: (id: string) => `${API_VERSION}/admin/steps/${id}/quizzes`
+    adminStepQuizzes: (id: string) => `${API_VERSION}/admin/steps/${id}/quizzes`,
+    parseGDriveFolder: `${API_VERSION}/admin/gdrive/parse-folder`,
+    parsePdfSlides: `${API_VERSION}/admin/slides/parse-pdf`,
+    uploadImages: `${API_VERSION}/admin/upload/images`
   }
 } as const;
+
+
+

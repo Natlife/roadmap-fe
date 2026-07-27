@@ -4,6 +4,7 @@ import { ArrowLeft2, InfoCircle } from 'iconsax-reactjs';
 import DOMPurify from 'dompurify';
 
 import type { Step, StepBlock } from '@/types';
+import { resolveImageUrl } from '@/utils/resolveImageUrl';
 
 // Flutter App exact color palette (flutter_demo/lib/main.dart)
 const C = {
@@ -148,7 +149,7 @@ function BlockView({ block }: { block: StepBlock }) {
             {block.mediaUrl ? (
               <Box
                 component="img"
-                src={block.mediaUrl}
+                src={resolveImageUrl(block.mediaUrl)}
                 alt={block.caption || 'Image'}
                 sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
               />

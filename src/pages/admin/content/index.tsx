@@ -37,7 +37,7 @@ export default function ContentTopics() {
         {topics.map((t) => (
           <ContentRow
             key={t.id}
-            title={`${t.emoji ? t.emoji + ' ' : ''}${t.title}`}
+            title={t.title}
             subtitle={t.description || 'No description'}
             meta={
               <Stack direction="row" spacing={1} alignItems="center">

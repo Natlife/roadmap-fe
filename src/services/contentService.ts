@@ -146,7 +146,31 @@ const contentService = {
   updateStep: (id: string, payload: Partial<CreateStepPayload>) => axios.put(endpoints.content.adminStep(id), { id, ...payload }).then(unwrap),
   deleteStep: (id: string) => axios.delete(endpoints.content.adminStep(id)).then(() => undefined),
 
-  makeBlock: (type: BlockType): StepBlock => ({ uid: uid(), type, title: '', body: '', items: [], mediaUrl: '', caption: '', codeLanguage: type === 'CODE' ? 'javascript' : '' })
+  makeBlock: (type: BlockType): StepBlock => ({ uid: uid(), type, title: '', body: '', items: [], mediaUrl: '', caption: '', codeLanguage: type === 'CODE' ? 'javascript' : '' }),
+
+  parseGDriveFolder: (url: string): Promise<{ folderId: string; count: number; urls: string[] }> =>
+    axios.post(endpoints.content.parseGDriveFolder, { url }).then((res) => unwrap(res) as { folderId: string; count: number; urls: string[] }),
+
+  parsePdfSlides: (file: File): Promise<{ numPages: number; slides: { pageIndex: number; title: string; text: string; html: string; imageUrl?: string }[] }> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return axios.post(endpoints.content.parsePdfSlides, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    }).then((res) => unwrap(res) as { numPages: number; slides: { pageIndex: number; title: string; text: string; html: string; imageUrl?: string }[] });
+  },
+
+
+  uploadImages: (files: File[]): Promise<{ count: number; urls: string[] }> => {
+    const formData = new FormData();
+    files.forEach((file) => formData.append('files', file));
+    return axios.post(endpoints.content.uploadImages, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    }).then((res) => unwrap(res) as { count: number; urls: string[] });
+  }
 };
+
+
+
+
 
 export default contentService;

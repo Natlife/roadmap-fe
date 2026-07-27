@@ -29,7 +29,17 @@ interface TopicFormDialogProps {
   onClose: () => void;
 }
 
-const EMOJI_OPTIONS = ['🎨', '💻', '🚀', '📚', '⚡', '🛠️', '🌐', '📱', '🧠'];
+const EMOJI_OPTIONS = [
+  { value: 'design', label: 'Design' },
+  { value: 'code', label: 'Code / Programming' },
+  { value: 'launch', label: 'Launch / DevOps' },
+  { value: 'book', label: 'General / Book' },
+  { value: 'flash', label: 'Flash / Quick' },
+  { value: 'tool', label: 'Tools / Build' },
+  { value: 'globe', label: 'Web / Internet' },
+  { value: 'mobile', label: 'Mobile / App' },
+  { value: 'brain', label: 'AI / Research' },
+];
 const LEVEL_OPTIONS = ['Beginner', 'Intermediate', 'Advanced'];
 const ACCESS_LEVELS: AccessLevel[] = ['FREE', 'PREMIUM', 'GROUP'];
 
@@ -44,7 +54,7 @@ export default function TopicFormDialog({ open, topic, onClose }: TopicFormDialo
     initialValues: {
       title: topic?.title ?? '',
       description: topic?.description ?? '',
-      emoji: topic?.emoji ?? '📚',
+      emoji: topic?.emoji ?? 'book',
       levelLabel: topic?.levelLabel ?? 'Beginner',
       estimatedHours: topic?.estimatedHours ?? 4,
       accessLevel: (topic?.accessLevel ?? 'FREE') as AccessLevel,
@@ -121,8 +131,8 @@ export default function TopicFormDialog({ open, topic, onClose }: TopicFormDialo
                 <InputLabel>Emoji Icon</InputLabel>
                 <Select {...formik.getFieldProps('emoji')}>
                   {EMOJI_OPTIONS.map((e) => (
-                    <MenuItem key={e} value={e}>
-                      {e} {e === '🎨' ? 'Design' : e === '💻' ? 'Code' : e === '🚀' ? 'Launch' : 'General'}
+                    <MenuItem key={e.value} value={e.value}>
+                      {e.label}
                     </MenuItem>
                   ))}
                 </Select>
