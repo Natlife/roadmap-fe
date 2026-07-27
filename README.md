@@ -1,152 +1,79 @@
-# Roadmap Admin (`roadmap-fe`)
+# Học Mẹo Admin Console (`roadmap-fe`)
 
-Production-ready React admin console for the Roadmap platform. Built on a modern MUI + Vite
-stack and styled after [Dokploy](https://dokploy.com) — a compact, bordered, dark-first
-developer console. Ships with a clean, feature-oriented architecture that is easy to extend
-module-by-module.
-
-First modules included: **Authentication**, **User management**, **Group management**
-(with membership editing), plus a Dashboard, Analytics, and Settings.
+Trang Web Quản Trị Hệ Thống **Học Mẹo Admin Console**, được xây dựng trên nền tảng **React 18 + Vite 6 + TypeScript 5.8 + MUI 6 (Material UI)**. Giao diện được thiết kế tối giản, hiện đại với tone màu thương hiệu Emerald Green `#4EB748` và hệ màu tối/sáng linh hoạt.
 
 ---
 
-## Tech stack
+## 1. Tính Năng Chính
 
-| Concern            | Choice                                             |
-| ------------------ | -------------------------------------------------- |
-| Build tool         | Vite 6 + `@vitejs/plugin-react`                    |
-| Language           | TypeScript 5.8 (strict)                            |
-| UI kit             | MUI 7 (`@mui/material`, `@mui/x-charts`, x-date-pickers) |
-| Icons              | `iconsax-reactjs`                                  |
-| Data / server state| TanStack Query 5                                   |
-| HTTP               | Axios (envelope-aware interceptors)                |
-| Forms + validation | Formik + Yup                                       |
-| Routing            | React Router 7 (`createBrowserRouter`, lazy routes)|
-| Tables             | TanStack Table 8                                   |
-| Notifications      | notistack                                          |
-| Fonts              | Inter (UI) + Roboto Mono (ids/code)               |
-
-## Requirements
-
-- Node.js 20+
-- Yarn 4 (Corepack): `corepack enable`
-
-## Getting started
-
-```bash
-corepack enable          # enables the pinned Yarn 4
-yarn install
-cp .env.example .env      # then edit VITE_API_BASE_URL if needed
-yarn dev                  # http://localhost:3000
-```
-
-Make sure the `node-backend` API is running (default `http://localhost:5001`).
-
-### Scripts
-
-| Script            | Purpose                                  |
-| ----------------- | ---------------------------------------- |
-| `yarn dev`        | Start Vite dev server on port 3000       |
-| `yarn build`      | Type-check then production build         |
-| `yarn preview`    | Preview the production build             |
-| `yarn typecheck`  | `tsc --noEmit`                           |
-| `yarn lint`       | ESLint over `src`                        |
-| `yarn lint:fix`   | ESLint autofix                           |
-| `yarn prettier`   | Format `src`                             |
-| `yarn knip`       | Find unused files/exports/deps           |
-
-## Environment variables
-
-| Var                  | Default                 | Description                     |
-| -------------------- | ----------------------- | ------------------------------- |
-| `VITE_API_BASE_URL`  | `http://localhost:5001` | Backend REST base URL           |
-| `VITE_APP_NAME`      | `Roadmap Admin`         | App title / logo text           |
-| `VITE_APP_VERSION`   | `1.0.0`                 | Shown in the header chip        |
-| `VITE_APP_BASE_NAME` | `/`                     | Router basename                 |
+- **Quản Lý Plan Request Tickets (`/admin/plan-requests`)**:
+  - Giao diện Datagrid hiển thị danh sách các yêu cầu nâng cấp gói từ học viên.
+  - Phân trang, tìm kiếm thời gian thực theo tên, SĐT, email, nội dung.
+  - Bộ lọc trạng thái: `ALL`, `PENDING`, `APPROVED`, `REJECTED`.
+  - Hộp thoại duyệt ticket kèm ghi chú. Khi bấm **APPROVED**, hệ thống tự động nâng cấp tài khoản học viên lên gói `PREMIUM`.
+- **Quản Lý Nội Dung Đa Tầng (Multi-Stage Content Pipeline)**:
+  - Quản lý Topics, Blogs (Lessons), Steps, Content Blocks (Lý thuyết, Mã minh họa, Ghi chú, Video, Audio) và Quiz Questions.
+- **Quản Lý Người Dùng & Nhóm Học Tập (Users & Groups)**:
+  - Quản lý tài khoản, phân quyền Admin/User, xếp nhóm học tập.
+- **Nhận Diện Thương Hiệu Học Mẹo**:
+  - Trang Login & Register tối giản với Logo 100x100 căn giữa và câu Quote truyền cảm hứng tiếng Anh.
 
 ---
 
-## Architecture
+## 2. Công Nghệ Sử Dụng (Tech Stack)
 
-```
-src/
-├── api/            # axios instance, endpoint map, query keys, query client
-├── components/     # shared, reusable UI (MainCard, Avatar, Dialogs, Logo, …)
-│   └── extended/   # MUI wrappers/extensions
-├── config.ts       # global app config + constants
-├── contexts/       # ConfigContext (theme prefs), JWTContext (auth), MenuContext
-├── hooks/          # useAuth, useConfig, useUsers, useGroups, useLocalStorage
-├── layout/         # Dashboard shell (Drawer/Header/Footer) + Auth layout
-├── menu-items/     # sidebar navigation config (role-aware)
-├── pages/          # route entry points (lazy-loaded)
-├── routes/         # router, guards composition, Main/Login route trees
-├── sections/       # feature-specific composite UI (tables, form dialogs)
-├── services/       # API service layer (auth, users, groups)
-├── themes/         # palette, typography, shadows, component overrides
-├── types/          # shared TypeScript contracts
-└── utils/          # route guards (Auth/Guest/Role) & helpers
-```
-
-### Data flow
-
-`page` → `hooks/use*` (TanStack Query) → `services/*` → `api/axios` (envelope
-unwrap + auth header) → backend.
-
-The backend wraps every response as `{ code, message, data, timestamp, meta? }`
-with success `code === 1000`. The axios interceptor unwraps `data`, surfaces
-errors as `ApiException`, and auto-signs-out on `401`.
-
-### Auth
-
-JWT is stored in `sessionStorage`. On boot, `JWTContext` validates the token
-(`jwt-decode` expiry check) and hydrates the user from `GET /auth/me`. Routes are
-protected by `AuthGuard`; the login page uses `GuestGuard`; admin areas add
-`RoleGuard(['ADMIN'])`.
-
-### Theming (Dokploy-style)
-
-`ThemeCustomization` builds the MUI theme from `ConfigContext`. Supports **dark +
-light** toggle, four accent presets, mini sidebar, boxed container, and language —
-all persisted to `localStorage`. The look is compact with 1px borders, muted zinc
-neutrals, subtle shadows, and a violet accent.
-
-### Backend endpoints consumed
-
-```
-POST   /auth/login
-GET    /auth/me
-GET    /users?page&pageSize          (admin)
-POST   /admin/users                  (admin)
-PUT    /users/:id
-DELETE /users/:id
-GET    /admin/groups
-GET    /admin/groups/:id
-POST   /admin/groups
-PUT    /admin/groups/:id
-DELETE /admin/groups/:id
-POST   /admin/groups/:groupId/members/:userId
-DELETE /admin/groups/:groupId/members/:userId
-```
-
-All paths are centralized in `src/api/endpoints.ts`.
+| Thành phần | Thư viện / Công nghệ |
+|---|---|
+| Core Framework | React 18, Vite 6, TypeScript 5.8 (Strict Mode) |
+| UI Kit | Material UI (MUI 6), `@mui/material`, `@mui/x-charts` |
+| Icons | `iconsax-reactjs` |
+| State & HTTP | TanStack Query 5, Axios (Response Envelope Interceptor) |
+| Routing | React Router 7 (`createBrowserRouter`, Lazy loading) |
+| Form & Validation | Formik + Yup |
+| Notifications | Notistack |
 
 ---
 
-## Adding a new module (recipe)
+## 3. Hướng Dẫn Khởi Chạy Cục Bộ (Getting Started)
 
-1. **Types** — add contracts in `src/types/<feature>.ts` and re-export from `index.ts`.
-2. **Endpoints** — add paths to `src/api/endpoints.ts`.
-3. **Service** — create `src/services/<feature>Service.ts` (unwrap envelopes).
-4. **Query hooks** — add `src/hooks/use<Feature>.ts` (+ keys in `api/queryKeys.ts`).
-5. **Sections** — build tables/forms in `src/sections/admin/<feature>/`.
-6. **Page** — create `src/pages/admin/<feature>/index.tsx`.
-7. **Route** — register it in `src/routes/MainRoutes.tsx` (wrap with `RoleGuard` if needed).
-8. **Menu** — add an entry in `src/menu-items/administration.tsx`.
+1. **Cài đặt các gói phụ thuộc**:
+   ```bash
+   cd roadmap-fe
+   npm install
+   ```
+
+2. **Cấu hình môi trường**:
+   Tạo tệp `.env` từ `.env.example`:
+   ```bash
+   cp .env.example .env
+   ```
+
+3. **Chạy server phát triển (Dev Mode)**:
+   ```bash
+   npm run dev
+   ```
+   *Web App sẽ mở tại `http://localhost:5173`*
+
+4. **Đóng gói Production**:
+   ```bash
+   npm run build
+   ```
+   *Tệp đóng gói tĩnh tối ưu sẽ được sinh ra tại thư mục `dist/`*
 
 ---
 
-## Notes
+## 4. Cấu Trúc Thư Mục (Directory Structure)
 
-- `sessionStorage` key + config `localStorage` key are defined in `src/config.ts`.
-- The users list currently searches within the loaded page (backend has no `search`
-  param yet); wire it up in `userService.list` when the API supports it.
+```
+roadmap-fe/
+├── src/
+│   ├── api/            # Axios setup, interceptors & endpoints
+│   ├── components/     # Reusable UI components (Logo, Cards, Modals)
+│   ├── layout/         # Admin Dashboard Shell & Auth Layout
+│   ├── pages/admin/    # Content, Plan Requests, Users, Groups Management Pages
+│   ├── routes/         # React Router 7 Trees & Role Guards
+│   ├── services/       # PlanRequestService, ContentService, UserService
+│   └── types/          # Shared TypeScript Definitions
+├── dist/               # Production Build Assets
+└── .env.example        # Environment Variable Blueprint
+```
