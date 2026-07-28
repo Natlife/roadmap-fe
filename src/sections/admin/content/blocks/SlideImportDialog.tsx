@@ -22,9 +22,8 @@ import { DocumentUpload, FolderAdd, Trash } from 'iconsax-reactjs';
 import { useSnackbar } from 'notistack';
 import contentService from '@/services/contentService';
 import { resolveImageUrl } from '@/utils/resolveImageUrl';
-import type { StepBlock } from '@/types';
 
-interface ParsedSlideItem {
+export interface ParsedSlideItem {
   pageIndex: number;
   imageUrl?: string;
   text: string;
@@ -34,11 +33,15 @@ interface ParsedSlideItem {
 interface SlideImportDialogProps {
   open: boolean;
   onClose: () => void;
-  onImport: (blocks: StepBlock[]) => void;
+  onImport: (slides: ParsedSlideItem[]) => void;
+  itemType?: 'step' | 'block';
 }
 
-export default function SlideImportDialog({ open, onClose, onImport }: SlideImportDialogProps) {
+export default function SlideImportDialog({ open, onClose, onImport, itemType = 'step' }: SlideImportDialogProps) {
   const { enqueueSnackbar } = useSnackbar();
+
+  const isBlockMode = itemType === 'block';
+  const labelPrefix = isBlockMode ? 'Block' : 'Step';
 
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [folderUrl, setFolderUrl] = useState('');
@@ -70,7 +73,7 @@ export default function SlideImportDialog({ open, onClose, onImport }: SlideImpo
       const hasImagesCount = res.slides.filter((s) => Boolean(s.imageUrl)).length;
       if (hasImagesCount > 0) {
         enqueueSnackbar(
-          `Đã tự động bóc tách thành công CẢ CHỮ & ÁNH cho ${hasImagesCount}/${res.numPages} trang slide từ file PDF!`,
+          `Đã tự động bóc tách thành công CẢ CHỮ & ẢNH cho ${hasImagesCount}/${res.numPages} trang slide từ file PDF!`,
           { variant: 'success' }
         );
       } else {
@@ -89,7 +92,7 @@ export default function SlideImportDialog({ open, onClose, onImport }: SlideImpo
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
 
-    // Sort files by name so slide1.png, slide2.png... stay in order
+    // Sort files by name so step1/block1 stay in order
     files.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
 
     setUploadingLocalImages(true);
@@ -97,7 +100,7 @@ export default function SlideImportDialog({ open, onClose, onImport }: SlideImpo
       const res = await contentService.uploadImages(files);
       if (res.urls && res.urls.length > 0) {
         setImageUrls(res.urls);
-        enqueueSnackbar(`Đã tải lên và lưu ${res.count} file ảnh ghi đè từ máy tính!`, { variant: 'success' });
+        enqueueSnackbar(`Đã tải lên và lưu ${res.count} file ảnh tương ứng từng ${labelPrefix} từ máy tính!`, { variant: 'success' });
       }
     } catch (err) {
       enqueueSnackbar((err as Error).message || 'Không thể tải ảnh lên', { variant: 'error' });
@@ -114,7 +117,7 @@ export default function SlideImportDialog({ open, onClose, onImport }: SlideImpo
       const res = await contentService.parseGDriveFolder(folderUrl.trim());
       if (res.urls && res.urls.length > 0) {
         setImageUrls(res.urls);
-        enqueueSnackbar(`Đã nạp ${res.count} hình ảnh slide từ Google Drive!`, { variant: 'success' });
+        enqueueSnackbar(`Đã nạp ${res.count} hình ảnh slide tương ứng từng ${labelPrefix} từ Google Drive!`, { variant: 'success' });
       } else {
         enqueueSnackbar('Không tìm thấy ảnh nào trong thư mục Google Drive', { variant: 'warning' });
       }
@@ -125,7 +128,7 @@ export default function SlideImportDialog({ open, onClose, onImport }: SlideImpo
     }
   };
 
-  // Build combined pairs (Slide 1: Image 1 + Text 1, Slide 2: Image 2 + Text 2...)
+  // Build combined pairs (Step 1/Block 1: Image 1 + Text 1...)
   const totalSlidesCount = Math.max(slidesText.length, imageUrls.length);
 
   const combinedSlides: ParsedSlideItem[] = Array.from({ length: totalSlidesCount }).map((_, i) => {
@@ -140,7 +143,6 @@ export default function SlideImportDialog({ open, onClose, onImport }: SlideImpo
     };
   });
 
-
   const handleRemoveSlide = (idx: number) => {
     setSlidesText((prev) => prev.filter((_, i) => i !== idx));
     setImageUrls((prev) => prev.filter((_, i) => i !== idx));
@@ -148,39 +150,11 @@ export default function SlideImportDialog({ open, onClose, onImport }: SlideImpo
 
   const handleImport = () => {
     if (combinedSlides.length === 0) {
-      enqueueSnackbar('Chưa có nội dung slide nào để chèn', { variant: 'warning' });
+      enqueueSnackbar(`Chưa có nội dung nào để tạo ${labelPrefix}`, { variant: 'warning' });
       return;
     }
 
-    const generatedBlocks: StepBlock[] = [];
-
-    combinedSlides.forEach((slide) => {
-      // 1. Heading block for Slide title
-      generatedBlocks.push({
-        ...contentService.makeBlock('HEADING'),
-        title: `Slide ${slide.pageIndex}`
-      });
-
-      // 2. Image block if available
-      if (slide.imageUrl) {
-        generatedBlocks.push({
-          ...contentService.makeBlock('IMAGE'),
-          mediaUrl: slide.imageUrl,
-          caption: `Slide ${slide.pageIndex}`
-        });
-      }
-
-      // 3. Rich text block for slide content
-      if (slide.html || slide.text) {
-        generatedBlocks.push({
-          ...contentService.makeBlock('RICHTEXT'),
-          body: slide.html || `<p>${slide.text}</p>`
-        });
-      }
-    });
-
-    onImport(generatedBlocks);
-    enqueueSnackbar(`Đã tạo và chèn ${generatedBlocks.length} blocks từ ${combinedSlides.length} slide vào bài học!`, { variant: 'success' });
+    onImport(combinedSlides);
     handleResetAndClose();
   };
 
@@ -197,12 +171,18 @@ export default function SlideImportDialog({ open, onClose, onImport }: SlideImpo
 
   return (
     <Dialog open={open} onClose={handleResetAndClose} maxWidth="md" fullWidth>
-      <DialogTitle>Import Bài Giảng Slide (PDF ➔ Content Blocks)</DialogTitle>
+      <DialogTitle>
+        {isBlockMode
+          ? 'Import Slide PDF ➔ Tự Động Tạo Các Block (Content Blocks)'
+          : 'Import Slide PDF ➔ Tự Động Tạo Các Bước (Steps)'}
+      </DialogTitle>
 
       <DialogContent sx={{ pt: 2 }}>
         <Stack spacing={2.5}>
           <Alert severity="info" sx={{ fontSize: '0.85rem' }}>
-            Hệ thống sẽ tự động bóc tách chữ từ file PDF slide và kết hợp với ảnh slide (tải từ máy tính hoặc Google Drive) để tạo ra các cặp block <strong>[Tiêu đề ➔ Ảnh ➔ Nội dung]</strong> chuẩn thứ tự 1, 2, 3...
+            {isBlockMode
+              ? 'Hệ thống sẽ tự động bóc tách từng trang slide từ PDF để tạo thành các Block (Block 1, Block 2, Block 3...) chèn trực tiếp vào Step này.'
+              : 'Hệ thống sẽ tự động bóc tách từng trang slide từ PDF để tạo thành từng Bước (Step) chuẩn thứ tự 1, 2, 3... Toàn bộ hình ảnh và văn bản trong mỗi trang slide sẽ nằm trọn vẹn trong phạm vi Step tương ứng đó.'}
           </Alert>
 
           <Grid container spacing={2}>
@@ -213,7 +193,7 @@ export default function SlideImportDialog({ open, onClose, onImport }: SlideImpo
                   1. Tải lên File Slide PDF
                 </Typography>
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                  File PDF xuất từ Canva / PowerPoint để trích xuất văn bản từng slide.
+                  File PDF xuất từ Canva / PowerPoint để trích xuất văn bản & ảnh cho từng {labelPrefix}.
                 </Typography>
 
                 <Button
@@ -234,7 +214,7 @@ export default function SlideImportDialog({ open, onClose, onImport }: SlideImpo
             <Grid size={{ xs: 12, md: 6 }}>
               <Paper variant="outlined" sx={{ p: 2, height: '100%', display: 'flex', flexDirection: 'column' }}>
                 <Typography variant="subtitle1" fontWeight={700} sx={{ mb: 0.5 }}>
-                  2. Nguồn Ảnh Slide
+                  2. Nguồn Ảnh Cho Các {labelPrefix}
                 </Typography>
 
                 <Tabs value={imageSourceTab} onChange={(_, v) => setImageSourceTab(v)} sx={{ minHeight: 36, mb: 1.5 }}>
@@ -245,7 +225,7 @@ export default function SlideImportDialog({ open, onClose, onImport }: SlideImpo
                 {imageSourceTab === 0 ? (
                   <Stack spacing={1} sx={{ mt: 'auto' }}>
                     <Typography variant="caption" color="text.secondary">
-                      Chọn tất cả các file ảnh slide (PNG / JPG) đã xuất trên máy tính (hệ thống tự xếp theo thứ tự tên file).
+                      Chọn tất cả các file ảnh slide (PNG / JPG) đã xuất trên máy tính (hệ thống tự xếp theo thứ tự tên file vào từng {labelPrefix}).
                     </Typography>
                     <Button
                       variant="outlined"
@@ -284,12 +264,12 @@ export default function SlideImportDialog({ open, onClose, onImport }: SlideImpo
             </Grid>
           </Grid>
 
-          {/* Preview list of matched slides */}
+          {/* Preview list of matched items */}
           {combinedSlides.length > 0 && (
             <Stack spacing={1.5}>
               <Divider />
               <Typography variant="subtitle2" color="primary.main" fontWeight={700}>
-                Xem trước danh sách bài giảng ({combinedSlides.length} slides):
+                Xem trước danh sách sẽ tạo ({combinedSlides.length} {labelPrefix.toLowerCase()}s):
               </Typography>
 
               <Stack spacing={1.5} sx={{ maxHeight: 320, overflowY: 'auto', pr: 0.5 }}>
@@ -299,9 +279,9 @@ export default function SlideImportDialog({ open, onClose, onImport }: SlideImpo
                     variant="outlined"
                     sx={{ p: 1.5, display: 'flex', gap: 2, alignItems: 'flex-start', bgcolor: 'background.default' }}
                   >
-                    {/* Slide Number */}
-                    <Typography variant="caption" fontWeight={800} sx={{ minWidth: 50, pt: 0.5 }}>
-                      Slide {slide.pageIndex}
+                    {/* Prefix Label */}
+                    <Typography variant="caption" fontWeight={800} sx={{ minWidth: 65, pt: 0.5 }}>
+                      {labelPrefix} {slide.pageIndex}
                     </Typography>
 
                     {/* Image Preview */}
@@ -309,7 +289,7 @@ export default function SlideImportDialog({ open, onClose, onImport }: SlideImpo
                       <Box
                         component="img"
                         src={slide.imageUrl}
-                        alt={`Slide ${slide.pageIndex}`}
+                        alt={`${labelPrefix} ${slide.pageIndex}`}
                         sx={{ width: 110, height: 65, objectFit: 'cover', borderRadius: 1, border: '1px solid', borderColor: 'divider' }}
                       />
                     ) : (
@@ -337,7 +317,7 @@ export default function SlideImportDialog({ open, onClose, onImport }: SlideImpo
                       </Typography>
                     </Box>
 
-                    {/* Remove Slide Pair */}
+                    {/* Remove Item */}
                     <IconButton size="small" color="error" onClick={() => handleRemoveSlide(idx)}>
                       <Trash size={16} />
                     </IconButton>
@@ -358,7 +338,9 @@ export default function SlideImportDialog({ open, onClose, onImport }: SlideImpo
           disabled={combinedSlides.length === 0}
           onClick={handleImport}
         >
-          Chèn tất cả {combinedSlides.length > 0 ? `${combinedSlides.length} slide` : ''} vào bài học
+          {isBlockMode
+            ? `Chèn tất cả ${combinedSlides.length > 0 ? `${combinedSlides.length} blocks` : ''} vào Step`
+            : `Tạo tất cả ${combinedSlides.length > 0 ? `${combinedSlides.length} bước (Steps)` : ''} vào bài học`}
         </Button>
       </DialogActions>
     </Dialog>

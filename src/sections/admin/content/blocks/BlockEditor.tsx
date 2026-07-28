@@ -57,9 +57,34 @@ export default function BlockEditor({ blocks, onChange }: BlockEditorProps) {
     onChange([...blocks, ...newBlocks]);
   };
 
-  const handleSlideImport = (newBlocks: StepBlock[]) => {
+  const handleSlideImport = (slides: import('./SlideImportDialog').ParsedSlideItem[]) => {
+    const newBlocks: StepBlock[] = [];
+
+    slides.forEach((slide) => {
+      newBlocks.push({
+        ...contentService.makeBlock('HEADING'),
+        title: `Slide ${slide.pageIndex}`
+      });
+
+      if (slide.imageUrl) {
+        newBlocks.push({
+          ...contentService.makeBlock('IMAGE'),
+          mediaUrl: slide.imageUrl,
+          caption: `Slide ${slide.pageIndex}`
+        });
+      }
+
+      if (slide.html || slide.text) {
+        newBlocks.push({
+          ...contentService.makeBlock('RICHTEXT'),
+          body: slide.html || `<p>${slide.text}</p>`
+        });
+      }
+    });
+
     onChange([...blocks, ...newBlocks]);
   };
+
 
   const onDragEnd = (e: DragEndEvent) => {
     const { active, over } = e;
@@ -138,7 +163,9 @@ export default function BlockEditor({ blocks, onChange }: BlockEditorProps) {
         open={slideOpen}
         onClose={() => setSlideOpen(false)}
         onImport={handleSlideImport}
+        itemType="block"
       />
+
     </Stack>
   );
 }
