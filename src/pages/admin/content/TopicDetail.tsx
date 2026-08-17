@@ -48,6 +48,13 @@ export default function TopicDetail() {
               <Stack direction="row" spacing={1} alignItems="center">
                 <Chip
                   size="small"
+                  label={b.code || `BLOG-${String(b.id).padStart(5, '0')}`}
+                  color="primary"
+                  variant="outlined"
+                  sx={{ fontFamily: 'Roboto Mono, monospace', fontWeight: 700 }}
+                />
+                <Chip
+                  size="small"
                   label={b.accessLevel || 'FREE'}
                   color={b.accessLevel === 'PREMIUM' ? 'warning' : 'success'}
                   variant="outlined"

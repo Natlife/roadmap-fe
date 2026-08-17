@@ -30,8 +30,10 @@ export interface AppConfig {
 export const APP_NAME = import.meta.env.VITE_APP_NAME || 'Học Mẹo Admin';
 export const APP_VERSION = import.meta.env.VITE_APP_VERSION || '1.0.0';
 export const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001').replace(/\/+$/, '');
+export const SUPPORT_EMAIL = import.meta.env.VITE_SUPPORT_EMAIL || 'hoanganhbvh@gmail.com';
+export const APP_PACKAGE_ID = import.meta.env.VITE_APP_PACKAGE_ID || 'com.hocmeo.learning.app';
+export const DEVELOPER_NAME = import.meta.env.VITE_DEVELOPER_NAME || 'Học Mẹo Platform Team';
 
-// path after successful login
 export const APP_DEFAULT_PATH = '/dashboard';
 export const HORIZONTAL_MAX_ITEM = 7;
 

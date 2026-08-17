@@ -23,7 +23,7 @@ export interface Paginated<T> {
   meta: PaginationMeta;
 }
 
-export type UserSortField = 'fullName' | 'email' | 'username' | 'plan' | 'role' | 'active' | 'createdAt';
+export type UserSortField = 'id' | 'code' | 'fullName' | 'email' | 'username' | 'plan' | 'role' | 'active' | 'createdAt';
 
 export interface ListParams {
   page?: number;

@@ -36,10 +36,15 @@ export default function AuthLogin() {
     validationSchema: schema,
     onSubmit: async (values, { setSubmitting, setFieldValue }) => {
       try {
-        await login({ email: values.email, password: values.password });
+        const user = await login({ email: values.email, password: values.password });
         enqueueSnackbar('Welcome back!', { variant: 'success' });
-        const from = (location.state as { from?: string })?.from || APP_DEFAULT_PATH;
-        navigate(from, { replace: true });
+        const isAdmin = user?.role ? user.role.toUpperCase().includes('ADMIN') : false;
+        if (!isAdmin) {
+          navigate('/403', { replace: true });
+        } else {
+          const from = (location.state as { from?: string })?.from || APP_DEFAULT_PATH;
+          navigate(from, { replace: true });
+        }
       } catch (err) {
         const message = (err as ApiException)?.message || 'Login failed';
         setFieldValue('submit', message);

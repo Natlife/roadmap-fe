@@ -36,7 +36,7 @@ export interface AuthContextValue {
   isLoggedIn: boolean;
   isInitialized: boolean;
   user: AuthUser | null;
-  login: (credentials: LoginCredentials) => Promise<void>;
+  login: (credentials: LoginCredentials) => Promise<AuthUser>;
   logout: () => void;
 }
 

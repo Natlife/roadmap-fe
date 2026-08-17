@@ -49,6 +49,7 @@ export interface Step {
 // The middle layer — shown as "Blog" in the UI, stored as a lesson.
 export interface Blog {
   id: string;
+  code?: string;
   topicId: string;
   title: string;
   summary: string;

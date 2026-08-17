@@ -11,7 +11,7 @@ import EmptyState from '@/components/EmptyState';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import NameDialog from '@/sections/admin/content/NameDialog';
 import ContentRow from '@/sections/admin/content/ContentRow';
-import SlideImportDialog, { type ParsedSlideItem } from '@/sections/admin/content/blocks/SlideImportDialog';
+import SlideImportDialog, { type ParsedSlideItem, type ImportOptions } from '@/sections/admin/content/blocks/SlideImportDialog';
 import { useTopic, useCreateStep, useDeleteStep } from '@/hooks/useContent';
 import contentService from '@/services/contentService';
 import { queryKeys } from '@/api/queryKeys';
@@ -33,7 +33,7 @@ export default function BlogDetail() {
 
   const blog = useMemo(() => topic?.lessons.find((l) => l.id === blogId), [topic, blogId]);
 
-  const handleImportSlides = async (slides: ParsedSlideItem[]) => {
+  const handleImportSlides = async (slides: ParsedSlideItem[], options?: ImportOptions) => {
     if (slides.length === 0 || !blogId) return;
 
     setProcessingPdf(true);
@@ -42,9 +42,27 @@ export default function BlogDetail() {
 
     try {
       let createdCount = 0;
+      let targetSlides = slides;
 
-      for (let i = 0; i < slides.length; i++) {
-        const slide = slides[i];
+      // Process Slide 1 as Lesson Summary / Intro if useFirstSlideAsIntro option is enabled
+      if (options?.useFirstSlideAsIntro && slides.length > 0) {
+        const introSlide = slides[0];
+        targetSlides = slides.slice(1);
+
+        const rawIntroText = introSlide.text.trim();
+        if (rawIntroText) {
+          try {
+            await contentService.updateBlog(blogId, {
+              summary: rawIntroText.slice(0, 300)
+            });
+          } catch (err) {
+            console.warn('Could not update blog summary:', err);
+          }
+        }
+      }
+
+      for (let i = 0; i < targetSlides.length; i++) {
+        const slide = targetSlides[i];
 
         // 1. Generate Step Title
         const rawText = slide.text.trim();
@@ -53,7 +71,7 @@ export default function BlogDetail() {
         if (firstLine && firstLine.length > 0) {
           const cleanTitle = firstLine.replace(/^[#\s\-*]+/, '').slice(0, 70);
           if (cleanTitle) {
-            stepTitle = `Slide ${slide.pageIndex}: ${cleanTitle}`;
+            stepTitle = cleanTitle;
           }
         }
 
@@ -75,7 +93,7 @@ export default function BlogDetail() {
           blocks.push({
             ...contentService.makeBlock('IMAGE'),
             mediaUrl: slide.imageUrl,
-            caption: `Slide ${slide.pageIndex}`
+            caption: stepTitle
           });
         }
 
@@ -107,11 +125,20 @@ export default function BlogDetail() {
   return (
     <Box sx={{ position: 'relative' }}>
       <Breadcrumbs title="" />
-      <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2.5 }}>
+      <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 2.5 }}>
         <IconButton color="secondary" onClick={() => navigate(`/admin/content/topics/${topicId}`)}>
           <ArrowLeft size={18} />
         </IconButton>
         <Typography variant="h3">{blog?.title}</Typography>
+        {blog?.code && (
+          <Chip
+            label={blog.code}
+            color="primary"
+            variant="outlined"
+            size="small"
+            sx={{ fontFamily: 'Roboto Mono, monospace', fontWeight: 700 }}
+          />
+        )}
       </Stack>
 
       <MainCard

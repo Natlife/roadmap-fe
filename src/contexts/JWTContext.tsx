@@ -72,6 +72,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { token, user } = await authService.login(credentials);
     tokenStore.set(token);
     dispatch({ type: 'LOGIN', payload: { user } });
+    return user;
   }, []);
 
   const logout = useCallback(() => {

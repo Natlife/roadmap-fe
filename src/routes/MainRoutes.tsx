@@ -31,7 +31,7 @@ const MainRoutes: RouteObject = {
   children: [
     { index: true, element: <Navigate to="/dashboard" replace /> },
     { path: 'dashboard', element: <Dashboard /> },
-    { path: 'analytics', element: <Analytics /> },
+    { path: 'analytics', element: <RoleGuard roles={['ADMIN']}><Analytics /></RoleGuard> },
     { path: 'admin', element: <Navigate to="/admin/users" replace /> },
     { path: 'admin/plan-requests', element: <RoleGuard roles={['ADMIN']}><PlanRequestsPage /></RoleGuard> },
     { path: 'admin/users', element: <RoleGuard roles={['ADMIN']}><UsersPage /></RoleGuard> },

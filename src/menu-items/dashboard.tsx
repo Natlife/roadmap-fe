@@ -7,7 +7,7 @@ const dashboard: NavItemType = {
   type: 'group',
   children: [
     { id: 'dashboard', title: 'Dashboard', type: 'item', url: '/dashboard', icon: Home3, breadcrumbs: false },
-    { id: 'analytics', title: 'Analytics', type: 'item', url: '/analytics', icon: Chart21 }
+    { id: 'analytics', title: 'Analytics', type: 'item', url: '/analytics', icon: Chart21, roles: ['ADMIN'] }
   ]
 };
 

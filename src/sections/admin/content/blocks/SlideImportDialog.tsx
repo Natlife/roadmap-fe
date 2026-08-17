@@ -3,12 +3,15 @@ import {
   Alert,
   Box,
   Button,
+  Checkbox,
+  Chip,
   CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
   Divider,
+  FormControlLabel,
   Grid,
   IconButton,
   Paper,
@@ -30,10 +33,14 @@ export interface ParsedSlideItem {
   html: string;
 }
 
+export interface ImportOptions {
+  useFirstSlideAsIntro?: boolean;
+}
+
 interface SlideImportDialogProps {
   open: boolean;
   onClose: () => void;
-  onImport: (slides: ParsedSlideItem[]) => void;
+  onImport: (slides: ParsedSlideItem[], options?: ImportOptions) => void;
   itemType?: 'step' | 'block';
 }
 
@@ -42,6 +49,9 @@ export default function SlideImportDialog({ open, onClose, onImport, itemType = 
 
   const isBlockMode = itemType === 'block';
   const labelPrefix = isBlockMode ? 'Block' : 'Step';
+
+  const [useFirstSlideAsIntro, setUseFirstSlideAsIntro] = useState(true);
+
 
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [folderUrl, setFolderUrl] = useState('');
@@ -154,7 +164,7 @@ export default function SlideImportDialog({ open, onClose, onImport, itemType = 
       return;
     }
 
-    onImport(combinedSlides);
+    onImport(combinedSlides, { useFirstSlideAsIntro: !isBlockMode && useFirstSlideAsIntro });
     handleResetAndClose();
   };
 
@@ -182,8 +192,27 @@ export default function SlideImportDialog({ open, onClose, onImport, itemType = 
           <Alert severity="info" sx={{ fontSize: '0.85rem' }}>
             {isBlockMode
               ? 'Hệ thống sẽ tự động bóc tách từng trang slide từ PDF để tạo thành các Block (Block 1, Block 2, Block 3...) chèn trực tiếp vào Step này.'
-              : 'Hệ thống sẽ tự động bóc tách từng trang slide từ PDF để tạo thành từng Bước (Step) chuẩn thứ tự 1, 2, 3... Toàn bộ hình ảnh và văn bản trong mỗi trang slide sẽ nằm trọn vẹn trong phạm vi Step tương ứng đó.'}
+              : 'Hệ thống sẽ tự động bóc tách từng trang slide từ PDF để tạo thành từng Bước (Step) chuẩn thứ tự. Ảnh và văn bản của từng trang slide sẽ nằm trọn vẹn trong Step đó.'}
           </Alert>
+
+          {!isBlockMode && combinedSlides.length > 0 && (
+            <Paper variant="outlined" sx={{ p: 1.5, bgcolor: 'primary.lighter', borderColor: 'primary.light' }}>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={useFirstSlideAsIntro}
+                    onChange={(e) => setUseFirstSlideAsIntro(e.target.checked)}
+                    color="primary"
+                  />
+                }
+                label={
+                  <Typography variant="body2" fontWeight={700} color="primary.darker">
+                    📌 Dùng Slide 1 làm Nội dung Tổng quan / Giới thiệu Bài học (Mô tả), bắt đầu tạo các Bước (Steps) từ Slide 2 trở đi
+                  </Typography>
+                }
+              />
+            </Paper>
+          )}
 
           <Grid container spacing={2}>
             {/* Step 1: Upload PDF Slide */}
@@ -273,56 +302,74 @@ export default function SlideImportDialog({ open, onClose, onImport, itemType = 
               </Typography>
 
               <Stack spacing={1.5} sx={{ maxHeight: 320, overflowY: 'auto', pr: 0.5 }}>
-                {combinedSlides.map((slide, idx) => (
-                  <Paper
-                    key={idx}
-                    variant="outlined"
-                    sx={{ p: 1.5, display: 'flex', gap: 2, alignItems: 'flex-start', bgcolor: 'background.default' }}
-                  >
-                    {/* Prefix Label */}
-                    <Typography variant="caption" fontWeight={800} sx={{ minWidth: 65, pt: 0.5 }}>
-                      {labelPrefix} {slide.pageIndex}
-                    </Typography>
+                {combinedSlides.map((slide, idx) => {
+                  const isIntroSlide = !isBlockMode && useFirstSlideAsIntro && idx === 0;
+                  const stepNumber = !isBlockMode && useFirstSlideAsIntro ? idx : idx + 1;
 
-                    {/* Image Preview */}
-                    {slide.imageUrl ? (
-                      <Box
-                        component="img"
-                        src={slide.imageUrl}
-                        alt={`${labelPrefix} ${slide.pageIndex}`}
-                        sx={{ width: 110, height: 65, objectFit: 'cover', borderRadius: 1, border: '1px solid', borderColor: 'divider' }}
-                      />
-                    ) : (
-                      <Box
-                        sx={{
-                          width: 110,
-                          height: 65,
-                          borderRadius: 1,
-                          bgcolor: 'action.hover',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center'
-                        }}
-                      >
-                        <Typography variant="caption" color="text.secondary">
-                          Chưa có ảnh
+                  return (
+                    <Paper
+                      key={idx}
+                      variant="outlined"
+                      sx={{
+                        p: 1.5,
+                        display: 'flex',
+                        gap: 2,
+                        alignItems: 'flex-start',
+                        bgcolor: isIntroSlide ? 'info.lighter' : 'background.default',
+                        borderColor: isIntroSlide ? 'info.light' : 'divider'
+                      }}
+                    >
+                      {/* Prefix Label */}
+                      <Box sx={{ minWidth: 95, pt: 0.5 }}>
+                        {isIntroSlide ? (
+                          <Chip label="📌 Intro tổng quan" color="info" size="small" sx={{ fontWeight: 800, fontSize: '0.72rem' }} />
+                        ) : (
+                          <Typography variant="caption" fontWeight={800} color="text.primary">
+                            {labelPrefix} {stepNumber}
+                          </Typography>
+                        )}
+                      </Box>
+
+                      {/* Image Preview */}
+                      {slide.imageUrl ? (
+                        <Box
+                          component="img"
+                          src={slide.imageUrl}
+                          alt={`${labelPrefix} ${slide.pageIndex}`}
+                          sx={{ width: 110, height: 65, objectFit: 'cover', borderRadius: 1, border: '1px solid', borderColor: 'divider' }}
+                        />
+                      ) : (
+                        <Box
+                          sx={{
+                            width: 110,
+                            height: 65,
+                            borderRadius: 1,
+                            bgcolor: 'action.hover',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                          }}
+                        >
+                          <Typography variant="caption" color="text.secondary">
+                            Chưa có ảnh
+                          </Typography>
+                        </Box>
+                      )}
+
+                      {/* Text Preview */}
+                      <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+                        <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', maxLines: 3 }} color="text.primary">
+                          {slide.text ? slide.text.slice(0, 180) + (slide.text.length > 180 ? '...' : '') : '(Chưa có chữ)'}
                         </Typography>
                       </Box>
-                    )}
 
-                    {/* Text Preview */}
-                    <Box sx={{ flexGrow: 1, minWidth: 0 }}>
-                      <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', maxLines: 3 }} color="text.primary">
-                        {slide.text ? slide.text.slice(0, 180) + (slide.text.length > 180 ? '...' : '') : '(Chưa có chữ)'}
-                      </Typography>
-                    </Box>
-
-                    {/* Remove Item */}
-                    <IconButton size="small" color="error" onClick={() => handleRemoveSlide(idx)}>
-                      <Trash size={16} />
-                    </IconButton>
-                  </Paper>
-                ))}
+                      {/* Remove Item */}
+                      <IconButton size="small" color="error" onClick={() => handleRemoveSlide(idx)}>
+                        <Trash size={16} />
+                      </IconButton>
+                    </Paper>
+                  );
+                })}
               </Stack>
             </Stack>
           )}

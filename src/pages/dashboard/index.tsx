@@ -8,8 +8,9 @@ import StatCard from '@/sections/dashboard/StatCard';
 import useAuth from '@/hooks/useAuth';
 import { useUsers } from '@/hooks/useUsers';
 import { useGroups } from '@/hooks/useGroups';
+import UserDashboard from './UserDashboard';
 
-export default function Dashboard() {
+function AdminDashboard() {
   const theme = useTheme();
   const { user } = useAuth();
   const usersQuery = useUsers({ page: 1, pageSize: 1 });
@@ -72,4 +73,15 @@ export default function Dashboard() {
       </Grid>
     </Box>
   );
+}
+
+export default function Dashboard() {
+  const { user } = useAuth();
+  const isAdmin = user?.role ? user.role.toUpperCase().includes('ADMIN') : false;
+
+  if (!isAdmin) {
+    return <UserDashboard />;
+  }
+
+  return <AdminDashboard />;
 }

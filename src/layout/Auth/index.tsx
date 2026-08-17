@@ -55,6 +55,24 @@ export default function AuthLayout() {
           </Typography>
         </Stack>
         <Outlet />
+        <Box sx={{ mt: 2, textAlign: 'center' }}>
+          <Typography
+            component={RouterLink}
+            to="/privacy"
+            sx={{
+              color: 'text.secondary',
+              fontSize: 13,
+              textDecoration: 'none',
+              transition: 'color 0.2s',
+              '&:hover': {
+                color: 'primary.main',
+                textDecoration: 'underline'
+              }
+            }}
+          >
+            🔒 Chính sách quyền riêng tư (Privacy Policy)
+          </Typography>
+        </Box>
       </Stack>
     </Box>
   );

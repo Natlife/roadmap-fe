@@ -38,13 +38,14 @@ interface UsersTableProps {
 }
 
 const COLUMNS: { id: UserSortField | 'progress' | 'actions'; label: string; sortable: boolean; width?: string; align?: 'right' | 'left' }[] = [
-  { id: 'fullName', label: 'Learner', sortable: true, width: '24%' },
-  { id: 'email', label: 'Email', sortable: true, width: '25%' },
-  { id: 'role', label: 'Role', sortable: true, width: '11%' },
-  { id: 'plan', label: 'Plan', sortable: true, width: '11%' },
-  { id: 'active', label: 'Status', sortable: true, width: '11%' },
-  { id: 'progress', label: 'Progress', sortable: false, width: '9%' },
-  { id: 'actions', label: '', sortable: false, align: 'right', width: '9%' }
+  { id: 'code', label: 'User Code', sortable: true, width: '13%' },
+  { id: 'fullName', label: 'Learner', sortable: true, width: '22%' },
+  { id: 'email', label: 'Email', sortable: true, width: '22%' },
+  { id: 'role', label: 'Role', sortable: true, width: '10%' },
+  { id: 'plan', label: 'Plan', sortable: true, width: '10%' },
+  { id: 'active', label: 'Status', sortable: true, width: '9%' },
+  { id: 'progress', label: 'Progress', sortable: false, width: '7%' },
+  { id: 'actions', label: '', sortable: false, align: 'right', width: '7%' }
 ];
 
 export default function UsersTable({
@@ -105,6 +106,24 @@ export default function UsersTable({
               data.map((u) => (
                 <TableRow key={u.id} hover>
                   <TableCell sx={{ py: 1.25, px: 1.5, overflow: 'hidden' }}>
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        fontFamily: 'Roboto Mono, monospace',
+                        fontWeight: 700,
+                        bgcolor: 'action.hover',
+                        px: 1,
+                        py: 0.5,
+                        borderRadius: 1,
+                        border: '1px solid',
+                        borderColor: 'divider',
+                        display: 'inline-block'
+                      }}
+                    >
+                      {u.code || `USR-${String(u.id).padStart(5, '0')}`}
+                    </Typography>
+                  </TableCell>
+                  <TableCell sx={{ py: 1.25, px: 1.5, overflow: 'hidden' }}>
                     <Stack direction="row" spacing={1.25} alignItems="center" sx={{ opacity: u.active ? 1 : 0.55, minWidth: 0 }}>
                       <Avatar size="sm" sx={{ flexShrink: 0 }}>{initials(u)}</Avatar>
                       <Box sx={{ minWidth: 0, overflow: 'hidden' }}>
@@ -113,8 +132,8 @@ export default function UsersTable({
                             {u.fullName}
                           </Typography>
                         </Tooltip>
-                        <Typography variant="caption" color="text.secondary" noWrap display="block">
-                          {u.streakDays ?? 0} day streak
+                        <Typography variant="caption" color="primary.main" fontWeight={600} noWrap display="block">
+                          @{u.username} • {u.streakDays ?? 0}d streak
                         </Typography>
                       </Box>
                     </Stack>

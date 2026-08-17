@@ -4,6 +4,7 @@ import type { UserPlan, UserRole } from './auth';
 // separate "deleted" state — soft-delete is modelled as active === false.
 export interface User {
   id: string;
+  code?: string;
   email: string;
   username: string;
   fullName: string;
