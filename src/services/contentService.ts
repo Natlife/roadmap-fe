@@ -145,6 +145,8 @@ const contentService = {
   createStep: (payload: CreateStepPayload) => axios.post(endpoints.content.adminSteps, payload).then(unwrap),
   updateStep: (id: string, payload: Partial<CreateStepPayload>) => axios.put(endpoints.content.adminStep(id), { id, ...payload }).then(unwrap),
   deleteStep: (id: string) => axios.delete(endpoints.content.adminStep(id)).then(() => undefined),
+  deleteStepsBatch: (ids: string[]): Promise<{ deletedCount: number }> =>
+    axios.post(endpoints.content.adminStepBatchDelete, { ids }).then((res) => unwrap(res) as { deletedCount: number }),
 
   makeBlock: (type: BlockType): StepBlock => ({ uid: uid(), type, title: '', body: '', items: [], mediaUrl: '', caption: '', codeLanguage: type === 'CODE' ? 'javascript' : '' }),
 

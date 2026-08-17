@@ -38,6 +38,7 @@ export const endpoints = {
     adminLesson: (id: string) => `${API_VERSION}/admin/lessons/${id}`,
     adminSteps: `${API_VERSION}/admin/steps`,
     adminStep: (id: string) => `${API_VERSION}/admin/steps/${id}`,
+    adminStepBatchDelete: `${API_VERSION}/admin/steps/batch-delete`,
     adminStepBlocks: (id: string) => `${API_VERSION}/admin/steps/${id}/blocks`,
     adminStepQuizzes: (id: string) => `${API_VERSION}/admin/steps/${id}/quizzes`,
     parseGDriveFolder: `${API_VERSION}/admin/gdrive/parse-folder`,

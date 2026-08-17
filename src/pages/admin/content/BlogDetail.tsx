@@ -2,8 +2,8 @@ import { useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useSnackbar } from 'notistack';
 import { useQueryClient } from '@tanstack/react-query';
-import { Backdrop, Box, Button, CircularProgress, Chip, IconButton, Skeleton, Stack, Typography } from '@mui/material';
-import { Add, ArrowLeft, DocumentUpload } from 'iconsax-reactjs';
+import { Backdrop, Box, Button, Checkbox, CircularProgress, Chip, IconButton, Skeleton, Stack, Typography } from '@mui/material';
+import { Add, ArrowLeft, DocumentUpload, Trash } from 'iconsax-reactjs';
 
 import Breadcrumbs from '@/components/Breadcrumbs';
 import MainCard from '@/components/extended/MainCard';
@@ -31,7 +31,49 @@ export default function BlogDetail() {
   const [importingSlideOpen, setImportingSlideOpen] = useState(false);
   const [processingPdf, setProcessingPdf] = useState(false);
 
+  const [selectedStepIds, setSelectedStepIds] = useState<string[]>([]);
+  const [confirmBatchDeleteOpen, setConfirmBatchDeleteOpen] = useState(false);
+  const [batchDeleting, setBatchDeleting] = useState(false);
+
   const blog = useMemo(() => topic?.lessons.find((l) => l.id === blogId), [topic, blogId]);
+
+  const allStepIds = useMemo(() => blog?.steps.map((s) => s.id) || [], [blog]);
+  const isAllSelected = allStepIds.length > 0 && selectedStepIds.length === allStepIds.length;
+  const isSomeSelected = selectedStepIds.length > 0 && !isAllSelected;
+
+  const handleToggleSelectAll = () => {
+    if (isAllSelected) {
+      setSelectedStepIds([]);
+    } else {
+      setSelectedStepIds(allStepIds);
+    }
+  };
+
+  const handleToggleSelectStep = (stepId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedStepIds((prev) => [...prev, stepId]);
+    } else {
+      setSelectedStepIds((prev) => prev.filter((id) => id !== stepId));
+    }
+  };
+
+  const handleBatchDelete = async () => {
+    if (selectedStepIds.length === 0) return;
+    setBatchDeleting(true);
+
+    try {
+      const res = await contentService.deleteStepsBatch(selectedStepIds);
+      const deletedCount = res?.deletedCount ?? selectedStepIds.length;
+      enqueueSnackbar(`Đã xóa thành công ${deletedCount} bước!`, { variant: 'success' });
+      setSelectedStepIds([]);
+      setConfirmBatchDeleteOpen(false);
+      queryClient.invalidateQueries({ queryKey: queryKeys.content.topic(topicId) });
+    } catch (err) {
+      enqueueSnackbar((err as Error).message || 'Có lỗi xảy ra khi xóa hàng loạt', { variant: 'error' });
+    } finally {
+      setBatchDeleting(false);
+    }
+  };
 
   const handleImportSlides = async (slides: ParsedSlideItem[], options?: ImportOptions) => {
     if (slides.length === 0 || !blogId) return;
@@ -64,7 +106,6 @@ export default function BlogDetail() {
       for (let i = 0; i < targetSlides.length; i++) {
         const slide = targetSlides[i];
 
-        // 1. Generate Step Title
         const rawText = slide.text.trim();
         const firstLine = rawText.split('\n')[0]?.trim();
         let stepTitle = `Slide ${slide.pageIndex}`;
@@ -77,7 +118,6 @@ export default function BlogDetail() {
 
         const summary = rawText ? rawText.slice(0, 150) : `Nội dung slide ${slide.pageIndex}`;
 
-        // 2. Create new Step in current Blog/Lesson
         const newStepRes = await contentService.createStep({
           lessonId: blogId,
           title: stepTitle,
@@ -86,7 +126,6 @@ export default function BlogDetail() {
 
         const newStepId = (newStepRes as { id?: string })?.id;
 
-        // 3. Create content blocks inside the new Step (Image block + Text block)
         const blocks: StepBlock[] = [];
 
         if (slide.imageUrl) {
@@ -144,7 +183,17 @@ export default function BlogDetail() {
       <MainCard
         title="Steps"
         secondary={
-          <Stack direction="row" spacing={1.5}>
+          <Stack direction="row" spacing={1.5} alignItems="center">
+            {selectedStepIds.length > 0 && (
+              <Button
+                variant="contained"
+                color="error"
+                startIcon={<Trash size={18} />}
+                onClick={() => setConfirmBatchDeleteOpen(true)}
+              >
+                Xóa ({selectedStepIds.length}) bước đã chọn
+              </Button>
+            )}
             <Button
               variant="outlined"
               color="primary"
@@ -164,18 +213,46 @@ export default function BlogDetail() {
         }
         contentSX={{ p: 0 }}
       >
-        {!(blog?.steps.length) && <EmptyState title="No steps yet" description="Add a step, then open it to build its content." />}
-        {blog?.steps.map((s) => (
-          <ContentRow
-            key={s.id}
-            title={s.title}
-            subtitle={s.summary}
-            meta={<Chip size="small" variant="outlined" label={`${s.contentBlocks.length} blocks`} />}
-            onOpen={() => navigate(`/admin/content/steps/${s.id}`)}
-            onDelete={() => setDeleting(s)}
-            deleteLabel={`Delete ${s.title}`}
-          />
-        ))}
+        {!(blog?.steps.length) ? (
+          <EmptyState title="No steps yet" description="Add a step, then open it to build its content." />
+        ) : (
+          <>
+            {/* Header select all row */}
+            <Stack
+              direction="row"
+              alignItems="center"
+              spacing={1.5}
+              sx={{ px: 2, py: 1, bgcolor: 'action.hover', borderBottom: '1px solid', borderColor: 'divider' }}
+            >
+              <Checkbox
+                size="small"
+                checked={isAllSelected}
+                indeterminate={isSomeSelected}
+                onChange={handleToggleSelectAll}
+              />
+              <Typography variant="caption" fontWeight={700} color="text.secondary">
+                {selectedStepIds.length > 0
+                  ? `Đã chọn ${selectedStepIds.length} / ${blog.steps.length} bước`
+                  : 'Chọn tất cả các bước'}
+              </Typography>
+            </Stack>
+
+            {blog?.steps.map((s) => (
+              <ContentRow
+                key={s.id}
+                title={s.title}
+                subtitle={s.summary}
+                meta={<Chip size="small" variant="outlined" label={`${s.contentBlocks.length} blocks`} />}
+                selectable
+                selected={selectedStepIds.includes(s.id)}
+                onSelectChange={(checked) => handleToggleSelectStep(s.id, checked)}
+                onOpen={() => navigate(`/admin/content/steps/${s.id}`)}
+                onDelete={() => setDeleting(s)}
+                deleteLabel={`Delete ${s.title}`}
+              />
+            ))}
+          </>
+        )}
       </MainCard>
 
       <NameDialog
@@ -215,6 +292,16 @@ export default function BlogDetail() {
           })
         }
         onClose={() => setDeleting(null)}
+      />
+
+      {/* Batch Delete Confirm Dialog */}
+      <ConfirmDialog
+        open={confirmBatchDeleteOpen}
+        title="Xác nhận xóa hàng loạt"
+        description={`Bạn có chắc chắn muốn xóa vĩnh viễn ${selectedStepIds.length} bước đã chọn không? Toàn bộ các block nội dung trong các bước này sẽ bị xóa và không thể khôi phục.`}
+        loading={batchDeleting}
+        onConfirm={handleBatchDelete}
+        onClose={() => setConfirmBatchDeleteOpen(false)}
       />
 
       <SlideImportDialog

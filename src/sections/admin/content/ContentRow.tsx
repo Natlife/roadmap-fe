@@ -1,4 +1,4 @@
-import { Box, IconButton, Stack, Tooltip, Typography } from '@mui/material';
+import { Box, Checkbox, IconButton, Stack, Tooltip, Typography } from '@mui/material';
 import { ArrowRight2, Edit2, Trash } from 'iconsax-reactjs';
 import { type ReactNode } from 'react';
 
@@ -10,9 +10,23 @@ interface ContentRowProps {
   onEdit?: () => void;
   onDelete: () => void;
   deleteLabel?: string;
+  selectable?: boolean;
+  selected?: boolean;
+  onSelectChange?: (selected: boolean) => void;
 }
 
-export default function ContentRow({ title, subtitle, meta, onOpen, onEdit, onDelete, deleteLabel }: ContentRowProps) {
+export default function ContentRow({
+  title,
+  subtitle,
+  meta,
+  onOpen,
+  onEdit,
+  onDelete,
+  deleteLabel,
+  selectable = false,
+  selected = false,
+  onSelectChange
+}: ContentRowProps) {
   return (
     <Stack
       direction="row"
@@ -24,9 +38,19 @@ export default function ContentRow({ title, subtitle, meta, onOpen, onEdit, onDe
         borderBottom: '1px solid',
         borderColor: 'divider',
         '&:last-of-type': { borderBottom: 'none' },
-        '&:hover': { bgcolor: 'action.hover' }
+        '&:hover': { bgcolor: 'action.hover' },
+        ...(selected && { bgcolor: 'primary.lighter' })
       }}
     >
+      {selectable && (
+        <Checkbox
+          size="small"
+          checked={selected}
+          onChange={(e) => onSelectChange?.(e.target.checked)}
+          onClick={(e) => e.stopPropagation()}
+        />
+      )}
+
       <Box sx={{ flexGrow: 1, minWidth: 0, cursor: 'pointer' }} onClick={onOpen}>
         <Typography variant="subtitle1" noWrap>
           {title || 'Untitled'}
